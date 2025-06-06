@@ -1,0 +1,349 @@
+-- Services
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+local localPlayer = Players.LocalPlayer
+local camera = workspace.CurrentCamera
+
+-- Create ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "MyaXGui"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = localPlayer:WaitForChild("PlayerGui")
+
+-- Main draggable menu frame (hidden by default)
+local menuFrame = Instance.new("Frame")
+menuFrame.Name = "MenuFrame"
+menuFrame.Size = UDim2.new(0, 270, 0, 430) -- increased height to fit all sections
+menuFrame.Position = UDim2.new(0, 50, 0, 50)
+menuFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+menuFrame.BorderSizePixel = 0
+menuFrame.Active = true
+menuFrame.Draggable = true
+menuFrame.Visible = false
+menuFrame.Parent = screenGui
+
+local menuTitle = Instance.new("TextLabel", menuFrame)
+menuTitle.Size = UDim2.new(1, 0, 0, 30)
+menuTitle.BackgroundTransparency = 1
+menuTitle.Text = "MyaX Menu"
+menuTitle.Font = Enum.Font.SourceSansBold
+menuTitle.TextSize = 22
+menuTitle.TextColor3 = Color3.new(1, 1, 1)
+
+-- MyaX toggle button (always visible)
+local toggleButton = Instance.new("TextButton")
+toggleButton.Name = "ToggleButton"
+toggleButton.Size = UDim2.new(0, 100, 0, 30)
+toggleButton.Position = UDim2.new(0, 10, 0, 10)
+toggleButton.BackgroundColor3 = Color3.fromRGB(70, 130, 180)
+toggleButton.Font = Enum.Font.SourceSansBold
+toggleButton.TextSize = 20
+toggleButton.TextColor3 = Color3.new(1,1,1)
+toggleButton.Text = "MyaX"
+toggleButton.Parent = screenGui
+
+toggleButton.MouseButton1Click:Connect(function()
+	menuFrame.Visible = not menuFrame.Visible
+end)
+
+-- Helper function to create UI sections inside menuFrame with spacing
+local function createSection(title, yPos)
+	local frame = Instance.new("Frame", menuFrame)
+	frame.Size = UDim2.new(1, -20, 0, 70)
+	frame.Position = UDim2.new(0, 10, 0, yPos)
+	frame.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+	frame.BorderSizePixel = 0
+	
+	local label = Instance.new("TextLabel", frame)
+	label.Size = UDim2.new(1, 0, 0, 20)
+	label.Position = UDim2.new(0, 0, 0, 0)
+	label.BackgroundTransparency = 1
+	label.Font = Enum.Font.SourceSansBold
+	label.TextSize = 18
+	label.TextColor3 = Color3.new(1, 1, 1)
+	label.Text = title
+
+	return frame
+end
+
+-- ========== Infinite Jump Section ==========
+local jumpFrame = createSection("Infinite Jump", 40)
+local jumpToggle = Instance.new("TextButton", jumpFrame)
+jumpToggle.Size = UDim2.new(1, -20, 0, 30)
+jumpToggle.Position = UDim2.new(0, 10, 0, 35)
+jumpToggle.BackgroundColor3 = Color3.fromRGB(70, 130, 180)
+jumpToggle.Font = Enum.Font.SourceSans
+jumpToggle.TextSize = 18
+jumpToggle.TextColor3 = Color3.new(1, 1, 1)
+jumpToggle.Text = "Enable Infinite Jump"
+
+local infiniteJumpEnabled = false
+
+jumpToggle.MouseButton1Click:Connect(function()
+	infiniteJumpEnabled = not infiniteJumpEnabled
+	jumpToggle.Text = infiniteJumpEnabled and "Disable Infinite Jump" or "Enable Infinite Jump"
+end)
+
+UserInputService.JumpRequest:Connect(function()
+	if infiniteJumpEnabled then
+		local character = localPlayer.Character
+		if character then
+			local humanoid = character:FindFirstChildOfClass("Humanoid")
+			if humanoid then
+				humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+			end
+		end
+	end
+end)
+
+-- ========== Speed Changer Section ==========
+local speedFrame = createSection("Walk Speed", 120) -- 80px below last section (40 + 70 + 10 spacing)
+local speedBox = Instance.new("TextBox", speedFrame)
+speedBox.Size = UDim2.new(1, -20, 0, 30)
+speedBox.Position = UDim2.new(0, 10, 0, 35)
+speedBox.PlaceholderText = "Enter speed number"
+speedBox.ClearTextOnFocus = false
+speedBox.Font = Enum.Font.SourceSans
+speedBox.TextSize = 18
+speedBox.TextColor3 = Color3.new(1,1,1)
+speedBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+speedBox.Text = tostring(localPlayer.Character and localPlayer.Character:FindFirstChildOfClass("Humanoid") and localPlayer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed or 16)
+
+local speedButton = Instance.new("TextButton", speedFrame)
+speedButton.Size = UDim2.new(1, -20, 0, 30)
+speedButton.Position = UDim2.new(0, 10, 0, 65)
+speedButton.BackgroundColor3 = Color3.fromRGB(70, 130, 180)
+speedButton.Font = Enum.Font.SourceSans
+speedButton.TextSize = 18
+speedButton.TextColor3 = Color3.new(1, 1, 1)
+speedButton.Text = "Set Speed"
+
+speedButton.MouseButton1Click:Connect(function()
+	local speedNum = tonumber(speedBox.Text)
+	if speedNum and speedNum > 0 and speedNum <= 250 then
+		local humanoid = localPlayer.Character and localPlayer.Character:FindFirstChildOfClass("Humanoid")
+		if humanoid then
+			humanoid.WalkSpeed = speedNum
+		end
+	else
+		speedBox.Text = "Invalid (1-250)"
+	end
+end)
+
+-- ========== Highlight Section ==========
+local highlightFrame = createSection("Player Highlights", 200) -- 80px below last section (120 + 70 + 10 spacing)
+local highlightToggle = Instance.new("TextButton", highlightFrame)
+highlightToggle.Size = UDim2.new(1, -20, 0, 30)
+highlightToggle.Position = UDim2.new(0, 10, 0, 35)
+highlightToggle.BackgroundColor3 = Color3.fromRGB(70, 130, 180)
+highlightToggle.Font = Enum.Font.SourceSans
+highlightToggle.TextSize = 18
+highlightToggle.TextColor3 = Color3.new(1, 1, 1)
+highlightToggle.Text = "Enable Highlights"
+
+local highlightsEnabled = false
+local playerHighlights = {}
+
+local function refreshHighlights()
+	-- Clear old highlights
+	for _, highlight in pairs(playerHighlights) do
+		if highlight and highlight.Parent then
+			highlight:Destroy()
+		end
+	end
+	playerHighlights = {}
+
+	if highlightsEnabled then
+		for _, player in pairs(Players:GetPlayers()) do
+			if player ~= localPlayer and player.Character and player.Character.PrimaryPart then
+				local hrp = player.Character.PrimaryPart
+				local box = Instance.new("BoxHandleAdornment")
+				box.Adornee = hrp
+				box.AlwaysOnTop = true
+				box.ZIndex = 10
+				box.Size = hrp.Size + Vector3.new(0.5, 2, 0.5)
+				box.Transparency = 0
+				box.Color3 = Color3.new(1, 0, 0)
+				box.Parent = hrp
+				playerHighlights[player] = box
+			end
+		end
+	end
+end
+
+highlightToggle.MouseButton1Click:Connect(function()
+	highlightsEnabled = not highlightsEnabled
+	highlightToggle.Text = highlightsEnabled and "Disable Highlights" or "Enable Highlights"
+	if not highlightsEnabled then
+		for _, h in pairs(playerHighlights) do
+			if h and h.Parent then h:Destroy() end
+		end
+		playerHighlights = {}
+	end
+end)
+
+-- Refresh highlights every 5 seconds
+spawn(function()
+	while true do
+		wait(5)
+		refreshHighlights()
+	end
+end)
+
+-- ========== Camera Follow Section ==========
+local cameraFrame = createSection("Camera Follow", 280) -- 80px below last section (200 + 70 + 10 spacing)
+
+local dropdown = Instance.new("TextButton", cameraFrame)
+dropdown.Size = UDim2.new(1, -20, 0, 30)
+dropdown.Position = UDim2.new(0, 10, 0, 35)
+dropdown.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+dropdown.Font = Enum.Font.SourceSans
+dropdown.TextSize = 18
+dropdown.TextColor3 = Color3.new(1, 1, 1)
+dropdown.Text = "Select Player"
+
+local followToggle = Instance.new("TextButton", cameraFrame)
+followToggle.Size = UDim2.new(1, -20, 0, 30)
+followToggle.Position = UDim2.new(0, 10, 0, 70)
+followToggle.BackgroundColor3 = Color3.fromRGB(70, 130, 180)
+followToggle.Font = Enum.Font.SourceSans
+followToggle.TextSize = 18
+followToggle.TextColor3 = Color3.new(1, 1, 1)
+followToggle.Text = "Start Follow"
+
+local dropdownOpen = false
+local dropdownList = Instance.new("ScrollingFrame", cameraFrame)
+dropdownList.Size = UDim2.new(1, -20, 0, 120)
+dropdownList.Position = UDim2.new(0, 10, 0, 65)
+dropdownList.CanvasSize = UDim2.new(0, 0, 0, 0)
+dropdownList.BackgroundColor3 = Color3.fromRGB(30,30,30)
+dropdownList.BorderSizePixel = 0
+dropdownList.Visible = false
+dropdownList.ScrollBarThickness = 4
+
+local selectedPlayer = nil
+local following = false
+local followConnection = nil
+
+local function closeDropdown()
+	dropdownList.Visible = false
+	dropdownOpen = false
+end
+
+local function openDropdown()
+	dropdownList.Visible = true
+	dropdownOpen = true
+	-- Clear old buttons
+	for _, child in pairs(dropdownList:GetChildren()) do
+		if child:IsA("TextButton") then
+			child:Destroy()
+		end
+	end
+
+	local yPos = 0
+	for _, player in pairs(Players:GetPlayers()) do
+		local btn = Instance.new("TextButton", dropdownList)
+		btn.Size = UDim2.new(1, -10, 0, 25)
+		btn.Position = UDim2.new(0, 5, 0, yPos)
+		btn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+		btn.Font = Enum.Font.SourceSans
+		btn.TextSize = 16
+		btn.TextColor3 = Color3.new(1, 1, 1)
+		btn.Text = player.Name
+		btn.AutoButtonColor = true
+		btn.Name = player.Name
+
+		btn.MouseButton1Click:Connect(function()
+			selectedPlayer = player
+			dropdown.Text = player.Name
+			closeDropdown()
+		end)
+		yPos = yPos + 30
+	end
+
+	dropdownList.CanvasSize = UDim2.new(0, 0, 0, yPos)
+end
+
+dropdown.MouseButton1Click:Connect(function()
+	if dropdownOpen then
+		closeDropdown()
+	else
+		openDropdown()
+	end
+end)
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		if dropdownOpen then
+			local mousePos = UserInputService:GetMouseLocation()
+			local guiPos = dropdownList.AbsolutePosition
+			local guiSize = dropdownList.AbsoluteSize
+			if not (mousePos.X > guiPos.X and mousePos.X < guiPos.X + guiSize.X and mousePos.Y > guiPos.Y and mousePos.Y < guiPos.Y + guiSize.Y) then
+				closeDropdown()
+			end
+		end
+	end
+end)
+
+local function followPlayerHead(player)
+	if not player or not player.Character then return end
+	local localChar = localPlayer.Character
+	if not localChar then return end
+	local localHRP = localChar:FindFirstChild("HumanoidRootPart")
+	if not localHRP then return end
+
+	camera.CameraType = Enum.CameraType.Scriptable
+
+	if followConnection then
+		followConnection:Disconnect()
+		followConnection = nil
+	end
+
+	followConnection = RunService.RenderStepped:Connect(function()
+		if not player.Character or not player.Character:FindFirstChild("Head") then
+			-- Player left or died, stop following
+			followToggle.Text = "Start Follow"
+			camera.CameraType = Enum.CameraType.Custom
+			followConnection:Disconnect()
+			followConnection = nil
+			return
+		end
+
+		local targetHead = player.Character.Head
+		local lookAtPos = targetHead.Position
+
+		-- Camera position = local player HRP position + offset (like a little above)
+		local camPos = localHRP.Position + Vector3.new(0, 2, 0)
+
+		-- Compute look direction from camera pos to target head pos
+		local lookVector = (lookAtPos - camPos).Unit
+		local targetCFrame = CFrame.new(camPos, camPos + lookVector)
+
+		-- Smooth lerp camera CFrame for smooth rotation
+		camera.CFrame = camera.CFrame:Lerp(targetCFrame, 0.25)
+	end)
+end
+
+followToggle.MouseButton1Click:Connect(function()
+	if following then
+		followToggle.Text = "Start Follow"
+		following = false
+		if followConnection then
+			followConnection:Disconnect()
+			followConnection = nil
+		end
+		camera.CameraType = Enum.CameraType.Custom
+	else
+		if selectedPlayer and selectedPlayer.Character then
+			followToggle.Text = "Stop Follow"
+			following = true
+			followPlayerHead(selectedPlayer)
+		else
+			followToggle.Text = "Select Player First"
+			wait(2)
+			followToggle.Text = "Start Follow"
+		end
+	end
+end)
